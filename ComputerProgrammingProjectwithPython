@@ -1,0 +1,195 @@
+echo "# Python" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/ZJulieWang/Python.git
+git push -u origin main
+
+# ComputerProgrammingProjectwithPython
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+#Part 1
+
+Mauna_Loa_df=pd.read_csv('Mauna_Loa_CO2.csv',skiprows=47)
+Mauna_Loa_df
+#Source: https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html
+#This is used to find how to import the dataframe without the unuseful lines.
+#Comment: It is used to load the data from the file 'Mauna_Loa_CO2.csv' into a pandas dataframe, name it as ‘Mauna_Loa_df’ and display it with 2494 rows and 9 columns.
+
+Mauna_Loa_df.plot(x ='decimal', y='average', kind='line')
+plt.xlabel('date in year')
+plt.ylabel('average carbon dioxide levels in ppm')
+plt.title('the carbon dioxide data contained therein versus time')
+plt.legend()
+plt.show()
+#Source: https://datatofish.com/plot-dataframe-pandas/
+#In order to plot a DataFrame using Pandas to a line chart with x-axis being 'decimal' and y-axis being 'average'.
+#Comment: the plot shows the carbon dioxide levels in ppm versus the date in years. There are some irregularities shown in the graph.
+
+Mauna_Loa_df=Mauna_Loa_df[Mauna_Loa_df['average']!=-999.99]
+print(Mauna_Loa_df)
+Mauna_Loa_df.plot(x ='decimal', y='average')
+plt.xlabel('date in year')
+plt.ylabel('average carbon dioxide levels in ppm')
+plt.title('the carbon dioxide data contained therein versus time without irregularities')
+plt.legend()
+plt.show()
+#Source: https://thispointer.com/python-pandas-how-to-drop-rows-in-dataframe-by-conditions-on-column-values/
+#Delete rows based on condition on a column. To remove the irregularities in the ‘average’ column, since all the abnormal values are equal to -999.99, it could be written as Mauna_Loa_df[Mauna_Loa_df['average']!=-999.99], then the original dataframe is changed to the new one which is called "Mauna_Loa_df" with 2476 rows  and 9 columns, now we can plot it using the same method as the last question.[Mauna_Loa_CO2.csv](https://github.com/ZJulieWang/ComputerProgrammingProjectwithPython/files/10787049/Mauna_Loa_CO2.csv)
+#Comment: The plot shows that the average concentration of carbon dioxide increases evenly from 1974 to 2022.
+
+#Part 2:  Polynomial fitting
+
+np.polyfit(Mauna_Loa_df["decimal"],Mauna_Loa_df["average"],2)
+#Comment: Just copy and paste the code from question to check whether it works.
+#Source: https://numpy.org/doc/stable/reference/generated/numpy.polyfit.html
+#Comment: np.polyfit() is used to calculate Least squares polynomial fit. In this question, it fits a polynomial with degree 2 to points (Mauna_Loa_df["decimal"] , Mauna_Loa_df["average"]), and returns a vector of coefficients p that minimises the squared error in the order deg, deg-1, … 0.
+
+coefficients=np.polyfit(Mauna_Loa_df["decimal"],Mauna_Loa_df["average"],2)
+xx=Mauna_Loa_df["decimal"]
+yy=np.polyval(coefficients,xx)
+plt.plot(Mauna_Loa_df["decimal"],Mauna_Loa_df["average"],'.',label='original data')
+plt.plot(xx,yy,'r.',label='fitted data')
+plt.legend()
+plt.show()
+#Source: https://www.youtube.com/watch?v=nUDRCNGtN70
+#It is used to find how to plot the carbon dioxide data together with the fitted curve.
+#Firstly, we calculate the polynomial coefficients by np.ployfit(), then we use np.polyval() inputting what we get from np.ployfit() as polynomial coefficients and Mauna_Loa_df["decimal"] as x, which will output the fitted data of carbon dioxide concentration.
+#Comment: We produce the original data and the fitted data in a plot by the same method as question 1.2, where the fitted curve shows the trend of the orginal data clearly, since that is an optimal set for a defined function that best fits the given observations.
+#Comment: The red line apparently shows a increasing trend of concentration of carbon dioxide.
+#Source: https://machinelearningmastery.com/curve-fitting-with-python/
+
+def least_squares_solver_polynomial(A,m):
+    z=np.array(A)
+    #Compute the number of rows of X
+    n=z.shape[0] 
+    #Construct X, the matrix that contains the x-data
+    x=[z[i][0] for i in range(n)]
+    #Construct y, the column vector that contains the y-data
+    y=[z[i][1] for i in range(n)]
+    #Construct X, the matrix corresponded to every degree, and its transpose matrix
+    xx=np.array([[x[j]**k for k in range(m+1)] for j in range(len(x))])
+    xxT=xx.T
+    #Evaluate the product A=(X^T)*X
+    A=xxT@xx
+    #Evaluate the column vector b=(X^T)*y
+    b=xxT@y
+    #Solve the system Aa=b
+    return np.linalg.solve(A,b)
+#Source: http://localhost:8888/notebooks/it%20class/week12-lab.ipynb
+#There is a similar question in week12 lab.
+#Comment: Following the background information given above, we wanna creat a matrix X with the first column being x to the power of 0, the second column being x to the power of 1 and the m+1th column being x to the power of degree m, also y is from 'average' column with m rows, then by solving the normal equation '(𝑋𝑇𝑋)𝐚=𝑋𝑇𝐲.', we can get the a which is an array of the coefficients of the polynomial orderd from lower degree to higher degree.
+
+least_squares_solver_polynomial(Mauna_Loa_df[["decimal","average"]],2)
+#Comment: The output given by the least_squares_solver_polynomial is an array with three same numbers as 2.1 producing but in reverse order.
+#Comment: For the output given by np.polyfit(), the coefficients of the polynomial is orderd from high degree to low degree, but least_squares_solver_polynomial() gives the reverse order.
+
+#Part 3: Global fitting versus local fitting 
+
+for m in range(1,7):
+    coefficients=np.polyfit(Mauna_Loa_df["decimal"],Mauna_Loa_df["average"],m)
+    xx=Mauna_Loa_df["decimal"]
+    print("Fit polynomial of degree",m)
+    print(*zip(range(len(coefficients)),coefficients),sep='\n')
+    yy=np.polyval(coefficients,xx)
+    difference=Mauna_Loa_df["average"]-yy
+    plt.figure(figsize=(15,5))
+    plt.plot(xx,difference,'-',label='difference')
+    plt.legend()
+    plt.show()
+#Source: https://eu.bbcollab.com/collab/ui/session/playback
+#It is the week 12 lab video where includs how to print the degree and the coefficients as a coordinate for degrees from one to six.
+#Comment: The fitted data is calculated by np.polyval() which is same as 2.2, but in this question, we would like to get the coefficients of the polynomial for every degree from one to six, so we use for loop.
+#Comment: We can simply get the difference between fitted data and original data by subtracting, and show it by plt.plot().
+#Source: https://www.codegrepper.com/code-examples/python/plt.figure%28figsize%3D%288+5%29%29
+#It is used to change the size of the graph.
+#Comment: To make the graph being larger and clearer.
+#Comment: With the increasing degree of polynomial, we get the difference smaller and smaller because the range of y-axis is changed from -7.5~10.0 to -4~4, also the trend of graphs became more horizontal, so fitted curve matches the original graph better and better.
+
+def local_fit(data,xmin,xmax):
+    x1=data[data.iloc[:,0]>=xmin]
+    x2=x1[x1.iloc[:,0]<xmax]
+    yaverage=sum(x2.iloc[:,1])/len(x2)
+    return yaverage
+#Source: https://thispointer.com/pandas-select-first-column-of-dataframe-in-python/
+#The website above is used to find how to output the first column of a dataframe.
+#Source: https://www.datasciencemadesimple.com/drop-delete-rows-conditions-python-pandas/
+#It is used to drop a row or observation by condition.
+#Source: https://www.educative.io/edpresso/how-to-take-the-average-of-a-list-in-python
+#This is used to find How to take the average in Python.
+#Comment: Firstly, by df.iloc() and dropping rows by conditions, we output a dataframe including the 'x' and 'y' columns in a year x which is larger than xmin and less than xmax in the 'x' column. 
+#Comment: In the given dataframe, since there are only the floating points in the 'decimal' column, so we can find the year x in the range greater than xmin and less than xmax, for example, 1974.6667 is greater than 1974 and less than 1975, then we get the averege of 'average' by using sum()/len().
+
+y=[]
+for i in range(1974,2022):
+    h=local_fit(Mauna_Loa_df[["decimal","average"]],i,i+1)
+    y.append(h)
+x = range(1974,2022)
+plt.plot(x,y,label='average per year')
+plt.legend()
+plt.show()
+#We produce a list contained the average per year using local fit definition, then we show the local fit versus 49 years from 1974 to 2022 by line plot.
+#Comment: There is a evenly growing line which shows the local average concentration per year of carbon dioxide increased during past 50 years.
+
+y=[]
+for i in range(1974,2023):
+    h=local_fit(Mauna_Loa_df[["decimal","average"]],i,i+1)
+    y.append(h)
+Mauna_Loa_df['average per year']=Mauna_Loa_df['year'].replace([[i] for i in range(1974,2023)],[y[j] for j in range(49)])
+Mauna_Loa_df['diff'] = Mauna_Loa_df['average'] - Mauna_Loa_df['average per year']
+plt.figure(figsize=(15,5))
+plt.plot(Mauna_Loa_df['decimal'],Mauna_Loa_df['diff'])
+plt.show()
+#Source: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.replace.html
+#Simply use the 'year' column, we replace the year by the corresponding local averaging value for each row and creat a column called 'average per year' (fitted data) into the original dataframe, so we can get the difference by the actual data substracting the fitted data, then we plot it by plt.plot().
+#For example, we already know that the local fit in 2000 is 369.73301886792456, so in the new column "average per year", all the values corresponded to this year are 369.73301886792456.
+#Comment: The plot shows that the difference given by local fitting is small since the y-range is from -4 to 4, which is the same as the highest degree of polynomial fitting (the last graph in 3.1).
+
+#Part 4: Looking at the yearly variations
+
+plt.scatter(Mauna_Loa_df['month'],Mauna_Loa_df['diff'])
+plt.show()
+#The scatter plot below shows the difference we got from 3.3 versus 12 months.
+#We can plot it use the same method as before.
+
+def local_month_fit(data,xmin,xmax,mon):
+    x=data.iloc[:,0]
+    x1=data[data.iloc[:,0]>=xmin]
+    x2=x1[x1.iloc[:,0]<xmax]
+    mon1=x2[x2.iloc[:,1]==mon]
+    if len(mon1)!=0:
+        monaverage=sum(mon1.iloc[:,2])/len(mon1)
+        return monaverage
+    else:
+        return 0.
+#This definition is extended from local_fit in 3.2, and it calculates the average per month.
+#Firstly by df.iloc() and dropping rows by conditions, we output a dataframe including the 'decimal', 'month' and 'average' columns in a year which is larger than xmin and less than xmax, then similarly, we locate the dataframe in one month by 'x2[x2.iloc[:,1]==mon]'.
+#In this given dataframe, since there are only the floating points in the 'decimal' column, so we can find the year x in the range greater than xmin and less than xmax, for example, 1974.6667 is greater than 1974 and less than 1975, also the numbers in the 'month' column are all integers, so we can just let it equals the number 'mon' we input.
+#Evenetually, we get the averege of 'average' per month by using sum()/len().
+#The if loop is used to avoid division by 0.
+n = []
+for i in range(1,13):
+    averange_diff_mon=local_month_fit(Mauna_Loa_df[["decimal","month","diff"]],1974,2022,i)
+    n.append(averange_diff_mon)
+m=range(1,13)
+plt.plot(m,n,'or',markersize=5)
+plt.plot(m,n,color='cyan',label='averange_diff_mon')
+plt.legend()
+plt.show()
+#Firstly, we creat a list contained the average value per month using the definition of local_month_fit. After that, we can plot the scatter plot, average per month versus 12 months, also we can add the line at the same time simply by plt.plot().
+#We can change the marksize and the color as well.
+
+n = []
+for i in range(1,13):
+    averange_diff_mon=local_month_fit(Mauna_Loa_df[["decimal","month","diff"]],1974,2022,i)
+    n.append(averange_diff_mon)
+Mauna_Loa_df['diff month']=Mauna_Loa_df['month'].replace([[i] for i in range(1,13)],[n[j] for j in range(12)])
+residual=Mauna_Loa_df['diff']-Mauna_Loa_df['diff month']    
+plt.figure(figsize=(15,5))
+plt.plot(Mauna_Loa_df['decimal'],residual)
+plt.show()
+#Residual means the observed data minus the predicted data
+#We can plot the residuals versus years.
